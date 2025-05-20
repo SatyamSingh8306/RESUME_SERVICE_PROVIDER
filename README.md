@@ -1,51 +1,55 @@
-# Resume Builder API
+# Resume Processing Service
 
-This service is responsible for building professional resumes based on user input. It provides a simple API endpoint to generate well-formatted resumes in various formats.
+This service is responsible for processing and enhancing resumes. It provides APIs for analyzing resumes and optimizing them for specific job positions.
 
 ## Features
 
-- Resume building from user data
-- JSON response format
-- Easy to integrate API
+- Resume text extraction and processing
+- Job-specific resume enhancement
+- Customizable tone and domain-specific optimization
+- JWT-based authentication
+- Asynchronous processing with RabbitMQ
+- Redis-based caching
 
-## Setup
+## API Endpoints
 
-1. Install dependencies:
+### Process Resume
+- **POST** `/v1/resume/process/{user_id}`
+- Process and extract text from a user's resume
+- Requires JWT Bearer token in Authorization header
+
+### Enhance Resume
+- **POST** `/v1/resume/process/{user_id}?is_job=true`
+- Enhance resume for a specific job position
+- Requires JWT Bearer token in Authorization header
+- Parameters:
+  - `job_title`: Target job title
+  - `job_description`: Job description
+  - `domain`: (Optional) Industry domain
+  - `tone`: (Optional) Writing tone (default: "professional")
+
+## Installation
+
+1. Clone the repository
+
+2. Rename the `.env.example` file to `.env` and update the values
+
+```bash
+cp .env.example .env
+```
+
+3. Install the dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Run the server:
+4. Run the server
+
 ```bash
-uvicorn app.main:app --reload
+python -m app
 ```
 
-## API Usage
+## Documentation
 
-### Build Resume
-POST `/api/build-resume`
-
-Request body:
-```json
-{
-    "user_data": {
-        "name": "John Doe",
-        "experience": [...],
-        "education": [...],
-        "skills": [...]
-    }
-}
-```
-
-Response:
-```json
-{
-    "status": "success",
-    "message": "Resume built successfully",
-    "resume_data": {...}
-}
-```
-
-## Development
-
-The project uses FastAPI for the backend API. The main functionality is in `app/main.py`.
+After running the server, you can access the documentation at `http://localhost:8000/docs`.

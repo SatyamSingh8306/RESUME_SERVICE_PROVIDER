@@ -1,49 +1,62 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Dict, Any
+import asyncio
 import logging
-from app.services.orchestrator import ResumeOrchestrator
+from contextlib import asynccontextmanager
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app import ENV, SERVICE_QUEUE
+from app.app_v1 import app as app_v1
+from app.services.broker import Broker, EventService, RPCService
+from app.services.redis import RedisService
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:\t  %(message)s")
+logging.getLogger("uvicorn.access").addFilter(
+    lambda record: "GET / " not in record.getMessage()
 )
-logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    RedisService.connect()
+    await Broker.connect()
+    logging.info(f"Serving in {ENV} environment")
+
+    tasks = [
+        EventService.subscribe(SERVICE_QUEUE, EventService),
+        RPCService.respond(EventService),
+    ]
+    tasks = [asyncio.create_task(task) for task in tasks]
+
+    yield
+
+    [task.cancel() for task in tasks]
+    RedisService.disconnect()
+    await Broker.close()
+
 
 app = FastAPI(
-    title="Resume Builder API",
-    version="0.1.0",
+    title="Resume Processing API",
+    version="1.0.0",
+    lifespan=lifespan,
+    servers=[{"url": "/v1", "description": "Version 1"}],
+    description="Core service for resume processing and enhancement"
 )
 
-# Initialize orchestrator
-orchestrator = ResumeOrchestrator()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class ResumeRequest(BaseModel):
-    user_data: Dict[str, Any]
-
-@app.post("/api/build-resume")
-async def build_resume(request: ResumeRequest):
-    try:
-        logger.info("Received resume build request")
-        result = await orchestrator.process_resume(request.user_data)
-        logger.info("Resume built successfully")
-        return result
-    except Exception as e:
-        logger.error(f"Error building resume: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/resume/{user_id}")
-async def get_resume(user_id: str):
-    try:
-        logger.info(f"Fetching resume for user: {user_id}")
-        result = await orchestrator.get_resume(user_id)
-        logger.info(f"Resume retrieved successfully for user: {user_id}")
-        return result
-    except Exception as e:
-        logger.error(f"Error retrieving resume: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+app.mount("/v1", app_v1)
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Resume Builder API"}
+    return {
+        "message": "Welcome to the Resume Processing Service",
+        "version": "1.0.0",
+        "environment": ENV
+    }

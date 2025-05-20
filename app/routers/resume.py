@@ -1,63 +1,40 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-import json
-from app.services.textEditing import loader, chaining
-import tempfile
-import os
+from typing import Optional, Annotated, Dict, Any
+
+from app.dependencies import authorize
+from app.utils.resume_url import get_resume_url
+from app.services.resume_processor import ResumeProcessor
 
 router = APIRouter(prefix="/resume", tags=["resume"])
 
-class ResumeRequest(BaseModel):
-    domain: str
+class JobDetails(BaseModel):
     job_title: str
     job_description: str
-    resume_text: Optional[str] = None
+    domain: Optional[str] = ""
+    tone: Optional[str] = "professional"
 
-@router.post("/process")
+@router.post("/process/{user_id}")
 async def process_resume(
-    file: Optional[UploadFile] = File(None),
-    domain: str = Form(...),
-    job_title: str = Form(...),
-    job_description: str = Form(...),
-    resume_text: Optional[str] = Form(None)
-):
+        user_id: Annotated[str, Depends(authorize)],
+        job_details: JobDetails = None,
+        is_job: bool = False,
+) -> Dict[str, Any]:
     try:
-        content = ""
+        resume_processor = ResumeProcessor()
         
-        # Handle file upload if provided
-        if file:
-            if not file.filename.endswith('.pdf'):
-                raise HTTPException(status_code=400, detail="Only PDF files are supported")
-            
-            # Create a temporary directory for the PDF
-            with tempfile.TemporaryDirectory() as temp_dir:
-                temp_file_path = os.path.join(temp_dir, file.filename)
-                
-                # Save the uploaded file
-                with open(temp_file_path, "wb") as buffer:
-                    content = await file.read()
-                    buffer.write(content)
-                
-                # Process the PDF
-                content = loader(temp_dir)
-        
-        # Use provided text if no file was uploaded
-        elif resume_text:
-            content = resume_text
+        if is_job and job_details:
+            result = await resume_processor.enhance_resume(
+                user_id=user_id,
+                job_title=job_details.job_title,
+                job_description=job_details.job_description,
+                domain=job_details.domain,
+                tone=job_details.tone
+            )
+            return result
         else:
-            raise HTTPException(status_code=400, detail="Either a PDF file or resume text must be provided")
-
-        # Process the resume using the existing chaining function
-        result = chaining(
-            text=content,
-            domain=domain,
-            job_title=job_title,
-            job_description=job_description
-        )
-
-        # Convert the Response model to JSON
-        return result.model_dump()
+            resume_text = await resume_processor.get_resume_text(user_id)
+            return {"user_id": user_id, "resume_text": resume_text}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))

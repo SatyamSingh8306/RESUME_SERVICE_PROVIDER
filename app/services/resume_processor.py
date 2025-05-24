@@ -38,7 +38,7 @@ class ResumeProcessor:
             if not response or "data" not in response or "url" not in response["data"]:
                 raise ValueError(f"Invalid response format or missing URL for user {user_id}")
                 
-            return response["data"]["url"]
+            return response["data"]
         
         except Exception as e:
             logger.error(f"Error fetching resume URL for user {user_id}: {str(e)}")

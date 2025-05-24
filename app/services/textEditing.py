@@ -75,7 +75,7 @@ class TextEditingService:
                 "job_description": job_description
             }
         )
-        return result.content
+        return result
 
     async def check_grammar(self, text: str) -> Dict[str, List[str]]:
         """Check grammar and provide suggestions for improvement asynchronously"""
@@ -90,7 +90,7 @@ class TextEditingService:
             chain.invoke,
             {"text": text}
         )
-        return result.content
+        return result
 
     async def adjust_tone(self, text: str, tone: str = "professional") -> str:
         """Adjust the tone of the text to be more professional, confident, or other specified tone asynchronously"""
@@ -108,7 +108,7 @@ class TextEditingService:
                 "tone": tone
             }
         )
-        return result.content
+        return result
 
     async def extract_keywords(self, text: str, job_description: str) -> List[str]:
         """Extract relevant keywords from the text that match the job description asynchronously"""
@@ -126,7 +126,7 @@ class TextEditingService:
                 "job_description": job_description
             }
         )
-        return result.content
+        return result
 
     async def format_bullet_points(self, text: str) -> str:
         """Format text into professional bullet points asynchronously"""
@@ -141,5 +141,5 @@ class TextEditingService:
             chain.invoke,
             {"text": text}
         )
-        return result.content
+        return result
     

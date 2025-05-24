@@ -2,12 +2,19 @@ import asyncio
 import json
 import logging
 import uuid
+from typing import TypedDict
 
 import aio_pika
 
 from app import RPC_QUEUE
 from app.services.broker import Broker
 from app.utils.errors import RequestTimeoutException408
+
+
+class RPCPayloadType(TypedDict):
+    """Type definition for RPC payload"""
+    type: str
+    data: dict
 
 
 class RPCService:

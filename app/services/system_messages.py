@@ -3,6 +3,7 @@ resume_prompts = """You are an expert HR professional. Your task is to extract i
                     Domain:{domain}
                     Job Title: {job_title}
                     Job Description : {job_description}
+                    User Data : {user_data}
 
                     Instructions:
                     1. Extract relevant information and map it to the appropriate fields in the schema.
@@ -11,6 +12,7 @@ resume_prompts = """You are an expert HR professional. Your task is to extract i
                     4. Add sufficient project according to job title and job description.
                     5. Make it ATS Friendly.
                     6. make sure to return something with validation of it's type so that i don't get error
+                    7. if job title and job description is none then use user_data and make an resume based on that. 
                     """
 
 enhance_resume_prompts = """You are an expert resume writer. Enhance the following text to be more professional and ATS-friendly.

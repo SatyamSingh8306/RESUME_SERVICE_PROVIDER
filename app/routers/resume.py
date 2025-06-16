@@ -19,6 +19,7 @@ async def process_resume(
         user_id: Annotated[str, Depends(authorize)],
         job_details: JobDetails = None,
         is_job: bool = False,
+        user_data : str = " "
 ) -> Dict[str, Any]:
     try:
         resume_processor = ResumeProcessor()
@@ -26,6 +27,7 @@ async def process_resume(
         if is_job and job_details:
             result = await resume_processor.enhance_resume(
                 user_id=user_id,
+                user_data = user_data,
                 job_title=job_details.job_title,
                 job_description=job_details.job_description,
                 domain=job_details.domain,

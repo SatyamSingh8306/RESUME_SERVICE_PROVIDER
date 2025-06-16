@@ -38,11 +38,11 @@ class TextEditingService:
         content = await fetch_pdf_text(file_url)
         return content
 
-    async def process_resume(self, text: str, domain: str, job_title: str, job_description: str) -> Response:
+    async def process_resume(self, text: str, domain: str, job_title: str, job_description: str, user_data: str) -> Response:
         """Process resume text and return structured data asynchronously"""
         prompts = PromptTemplate(
             template=resume_prompts,
-            input_variables=["text", "domain", "job_title", "job_description"],
+            input_variables=["text", "domain", "job_title", "job_description","user_data"],
         )
 
         chain = prompts | self.model_structured
@@ -53,7 +53,8 @@ class TextEditingService:
                 "text": text,
                 "domain": domain,
                 "job_title": job_title,
-                "job_description": job_description
+                "job_description": job_description,
+                "user_data" : user_data
             }
         )
         return result

@@ -79,6 +79,7 @@ class ResumeProcessor:
         job_title: str, 
         job_description: str,
         domain: str = "",
+        user_data : str= "",
         tone: str = "professional"
     ) -> Dict[str, Any]:
         """

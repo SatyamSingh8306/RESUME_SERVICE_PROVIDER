@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Any
 
 class Experience(BaseModel):
     title: str = Field(..., description="Job title or role held")
@@ -53,4 +53,28 @@ class Response(BaseModel):
     # Optional Sections
     achievements: Optional[List[str]] = Field(None, description="Notable achievements or awards")
     languages: Optional[List[str]] = Field(None, description="Languages known")
-    interests: Optional[List[str]] = Field(None, description="Personal or professional interests") 
+    interests: Optional[List[str]] = Field(None, description="Personal or professional interests")
+
+class ApiResponse(BaseModel):
+    status: str = Field(..., description="Status of the response, e.g., success or error")
+    message: str = Field(..., description="A human-readable message describing the result")
+    data: Optional[Any] = Field(None, description="Optional data payload, can be any type")
+
+class UserData(BaseModel):
+    name: str
+    graduation: str
+    specialization: Optional[str] = None
+    experience_level: str
+    description: str
+    email: str
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    skills: Optional[list] = []
+    experiences: Optional[list] = []
+    education: Optional[list] = []
+    projects: Optional[list] = []
+    certifications: Optional[list] = []
+    social_profiles: Optional[list] = []
+    achievements: Optional[list] = []
+    languages: Optional[list] = []
+    interests: Optional[list] = [] 

@@ -29,6 +29,7 @@ enhance_resume_prompts = """You are an expert resume writer. Enhance the followi
             4. Ensure proper grammar and punctuation
             5. Make it concise and impactful
             6. Use industry-specific keywords from the job description
+            7. Return all the data of user present in string format in orgranized way.
             """
 
 grammar_resume_prompts = """You are an expert grammar checker. Analyze the following text and provide grammar suggestions.
@@ -70,7 +71,6 @@ extract_keyword_prompts = """You are an expert in resume optimization. Extract r
 bullet_format_prompts = """You are an expert in resume optimization. Extract relevant keywords from the text that match the job description.
             
             Text: {text}
-            Job Description: {job_description}
             
             Instructions:
             1. Identify technical skills
@@ -79,3 +79,15 @@ bullet_format_prompts = """You are an expert in resume optimization. Extract rel
             4. Prioritize keywords that appear in the job description
             5. Return a list of unique keywords
             """
+
+user_data_resume_prompt = """You are an expert resume writer. Using only the provided user data, generate a professional, ATS-friendly resume in structured JSON format. Do not assume any job title or description. Use the information as provided to create a compelling resume.
+
+User Data: {user_data}
+
+Instructions:
+1. Extract and organize all relevant information from user_data.
+2. Fill in all possible sections (skills, experience, education, etc.) based on the data.
+3. If a section is missing, leave it empty or omit it.
+4. Ensure the output is well-structured, clear, and free of errors.
+5. Return the result as a JSON object matching the expected schema.
+"""

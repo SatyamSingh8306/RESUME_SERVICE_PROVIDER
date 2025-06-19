@@ -1,4 +1,3 @@
-import logging
 import asyncio
 from typing import Dict, Any, List, Optional
 import os
@@ -7,10 +6,6 @@ from app.services.textEditing import TextEditingService
 
 # Load environment variables
 load_dotenv()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Initialize service
 text_editing_service = TextEditingService()
@@ -76,7 +71,6 @@ async def test_resume_processing():
         """
         
         # Process the resume using the actual services
-        logger.info("Testing: Process Resume")
         
         # 1. Enhance text
         enhanced_text = await text_editing_service.enhance_text(
@@ -84,26 +78,21 @@ async def test_resume_processing():
             job_title=TEST_JOB_DATA["title"],
             job_description=TEST_JOB_DATA["description"]
         )
-        logger.info(f"Enhanced Text: {enhanced_text}")
         
         # 2. Check grammar
         grammar_suggestions = await text_editing_service.check_grammar(enhanced_text)
-        logger.info(f"Grammar Suggestions: {grammar_suggestions}")
         
         # 3. Adjust tone
         professional_text = await text_editing_service.adjust_tone(enhanced_text, tone="professional")
-        logger.info(f"Professional Text: {professional_text}")
         
         # 4. Format bullet points
         formatted_text = await text_editing_service.format_bullet_points(professional_text)
-        logger.info(f"Formatted Text: {formatted_text}")
         
         # 5. Extract keywords
         keywords = await text_editing_service.extract_keywords(
             text=formatted_text,
             job_description=TEST_JOB_DATA["description"]
         )
-        logger.info(f"Keywords: {keywords}")
         
         # 6. Process resume
         processed_resume = await text_editing_service.process_resume(
@@ -112,7 +101,6 @@ async def test_resume_processing():
             job_title=TEST_JOB_DATA["title"],
             job_description=TEST_JOB_DATA["description"]
         )
-        logger.info(f"Processed Resume: {processed_resume}")
         
         # Verify response
         assert enhanced_text, "Enhanced text missing"
@@ -121,10 +109,8 @@ async def test_resume_processing():
         assert keywords, "Keywords missing"
         assert processed_resume, "Processed resume missing"
         
-        logger.info("All resume processing tests completed successfully!")
-        
     except Exception as e:
-        logger.error(f"Test failed: {str(e)}")
+        pass
 
 if __name__ == "__main__":
     asyncio.run(test_resume_processing()) 

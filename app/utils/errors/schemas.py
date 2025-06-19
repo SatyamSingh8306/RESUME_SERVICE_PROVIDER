@@ -41,3 +41,15 @@ class ServiceUnavailableExceptionSchema(BaseModel):
     message: str
     status_code: int = 503
     type: str = "ServiceUnavailable"
+
+
+class PDFTextExtractionErrorSchema(BaseModel):
+    message: str
+    status_code: int = 422
+    type: str = "PDFTextExtractionError"
+
+
+class LLMServiceErrorSchema(BaseModel):
+    message: str
+    status_code: int = 502
+    type: str = "LLMServiceError"

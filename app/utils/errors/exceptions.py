@@ -56,3 +56,13 @@ class ServiceUnavailableException503(BaseException):
         super().__init__(
             message, 503, "ServiceUnavailable", ServiceUnavailableExceptionSchema
         )
+
+
+class PDFTextExtractionError(BaseException):
+    def __init__(self, message="Failed to extract text from PDF"):
+        super().__init__(message, 422, "PDFTextExtractionError", PDFTextExtractionErrorSchema)
+
+
+class LLMServiceError(BaseException):
+    def __init__(self, message="LLM service failed to process request"):
+        super().__init__(message, 502, "LLMServiceError", LLMServiceErrorSchema)

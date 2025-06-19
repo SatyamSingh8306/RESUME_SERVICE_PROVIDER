@@ -1,10 +1,9 @@
 from typing import Dict, Any, List, Optional
-import logging
 from app.services.broker.rpc import RPCService, RPCPayloadType
 from app.services.redis import RedisService
 from app.services.textEditing import TextEditingService
+from app.utils.errors.exceptions import PDFTextExtractionError, LLMServiceError
 
-logger = logging.getLogger(__name__)
 
 class ResumeProcessor:
     """
@@ -41,7 +40,6 @@ class ResumeProcessor:
             return response["data"]
         
         except Exception as e:
-            logger.error(f"Error fetching resume URL for user {user_id}: {str(e)}")
             raise Exception(f"Failed to fetch resume URL: {str(e)}")
     
     async def get_resume_text(self, user_id: str) -> str:
@@ -58,19 +56,20 @@ class ResumeProcessor:
             
             cached_text = await self.redis_service.get_resume_raw_text(user_id)
             if cached_text:
-                logger.info(f"Retrieved resume text from cache for user {user_id}")
                 return cached_text
             
             resume_url = await self.get_resume_url(user_id)
             
-            resume_text = await self.text_editing_service.load_resume_content(resume_url)
+            try:
+                resume_text = await self.text_editing_service.load_resume_content(resume_url)
+            except PDFTextExtractionError as e:
+                raise
             
             await self.redis_service.store_resume_raw_text(user_id, resume_text)
             
             return resume_text
             
         except Exception as e:
-            logger.error(f"Error getting resume text for user {user_id}: {str(e)}")
             raise Exception(f"Failed to get resume text: {str(e)}")
     
     async def enhance_resume(
@@ -98,36 +97,45 @@ class ResumeProcessor:
         try:
             resume_text = await self.get_resume_text(user_id)
             
-            enhanced_text = await self.text_editing_service.enhance_text(
-                text=resume_text,
-                job_title=job_title,
-                job_description=job_description
-            )
-            
-            grammar_suggestions = await self.text_editing_service.check_grammar(enhanced_text)
-            
-            professional_text = await self.text_editing_service.adjust_tone(enhanced_text, tone=tone)
-            
-            formatted_text = await self.text_editing_service.format_bullet_points(professional_text)
-            
-            keywords = await self.text_editing_service.extract_keywords(
-                text=formatted_text,
-                job_description=job_description
-            )
-            
-            processed_resume = await self.text_editing_service.process_resume(
-                text=formatted_text,
-                domain=domain,
-                job_title=job_title,
-                job_description=job_description
-            )
+            try:
+                enhanced_text = await self.text_editing_service.enhance_text(
+                    text=resume_text,
+                    job_title=job_title,
+                    job_description=job_description
+                )
+                # TODO: Future update - grammar suggestions
+                # grammar_suggestions = await self.text_editing_service.check_grammar(enhanced_text)
+                # TODO: Future update - adjust tone
+                # professional_text = await self.text_editing_service.adjust_tone(enhanced_text, tone=tone)
+                # TODO: Future update - format bullet points
+                # formatted_text = await self.text_editing_service.format_bullet_points(professional_text)
+                # For now, use enhanced_text for further processing
+                formatted_text = enhanced_text
+                keywords = await self.text_editing_service.extract_keywords(
+                    text=formatted_text,
+                    job_description=job_description
+                )
+                processed_resume = await self.text_editing_service.process_resume(
+                    text=formatted_text,
+                    domain=domain,
+                    job_title=job_title,
+                    job_description=job_description,
+                    user_data=user_data
+                )
+            except LLMServiceError as e:
+                return {
+                    "status": "error",
+                    "user_id": user_id,
+                    "error": str(e)
+                }
             
             result = {
                 "user_id": user_id,
                 "original_text": resume_text,
                 "enhanced_text": enhanced_text,
-                "formatted_text": formatted_text,
-                "grammar_suggestions": grammar_suggestions,
+                # "formatted_text": formatted_text,
+                # "grammar_suggestions": grammar_suggestions,  # Future update
+                # "professional_text": professional_text,      # Future update
                 "keywords": keywords,
                 "processed_resume": processed_resume
             }
@@ -137,7 +145,6 @@ class ResumeProcessor:
             return result
             
         except Exception as e:
-            logger.error(f"Error enhancing resume for user {user_id}: {str(e)}")
             return {
                 "status": "error",
                 "user_id": user_id,
@@ -167,10 +174,39 @@ class ResumeProcessor:
             raise Exception(f"Enhanced resume not found for user {user_id} and job {job_title}")
             
         except Exception as e:
-            logger.error(f"Error retrieving enhanced resume: {str(e)}")
             return {
                 "status": "error",
                 "user_id": user_id,
                 "job_title": job_title,
+                "error": str(e)
+            }
+    
+    async def create_resume_from_user_data(
+        self,
+        user_id: str,
+        user_data: dict
+    ) -> Dict[str, Any]:
+        """
+        Create a resume using only user data and a custom prompt.
+        """
+        try:
+            try:
+                processed_resume = await self.text_editing_service.create_resume_from_user_data(user_data)
+            except LLMServiceError as e:
+                return {
+                    "status": "error",
+                    "user_id": user_id,
+                    "error": str(e)
+                }
+            result = {
+                "user_id": user_id,
+                "processed_resume": processed_resume
+            }
+            await self.redis_service.store_enhanced_resume(user_id, "user_data_resume", result)
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "user_id": user_id,
                 "error": str(e)
             }

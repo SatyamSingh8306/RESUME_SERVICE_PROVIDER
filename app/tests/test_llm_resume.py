@@ -1,10 +1,5 @@
 import asyncio
-import logging
 from app.services.broker.rpc import RPCService, RPCPayloadType
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Sample resume data to test LLM
 TEST_RESUME_DATA = {
@@ -32,8 +27,6 @@ class LLMResponder:
     @staticmethod
     async def respond_rpc(request_payload: RPCPayloadType) -> dict:
         """Handle LLM requests for resume data"""
-        logger.info(f"Received request: {request_payload}")
-        
         request_type = request_payload["type"]
         request_data = request_payload["data"]
         
@@ -87,7 +80,6 @@ async def test_llm_resume():
         await asyncio.sleep(2)
         
         # Test 1: Analyze Resume
-        logger.info("Testing: Analyze Resume")
         analyze_payload = RPCService.build_request_payload(
             type="analyze_resume",
             data=TEST_RESUME_DATA
@@ -98,10 +90,8 @@ async def test_llm_resume():
             request_payload=analyze_payload,
             timeout=5
         )
-        logger.info(f"Analysis Response: {analyve_response}")
         
         # Test 2: Improve Resume
-        logger.info("Testing: Improve Resume")
         improve_payload = RPCService.build_request_payload(
             type="improve_resume",
             data=TEST_RESUME_DATA
@@ -112,7 +102,6 @@ async def test_llm_resume():
             request_payload=improve_payload,
             timeout=5
         )
-        logger.info(f"Improvement Response: {improve_response}")
         
         # Verify responses
         assert analyze_response["status"] == "success"
@@ -120,10 +109,8 @@ async def test_llm_resume():
         assert "analysis" in analyze_response
         assert "improved_sections" in improve_response
         
-        logger.info("All LLM tests completed successfully!")
-        
     except Exception as e:
-        logger.error(f"Test failed: {str(e)}")
+        pass
     finally:
         # Clean up
         responder_task.cancel()

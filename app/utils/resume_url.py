@@ -1,8 +1,6 @@
 from typing import Dict, Any
-import logging
 from app.services.broker.rpc import RPCService, RPCPayloadType
 
-logger = logging.getLogger(__name__)
 
 async def get_resume_url(user_id: str) -> str:
     """
@@ -24,13 +22,11 @@ async def get_resume_url(user_id: str) -> str:
         )
         
         if not response or "data" not in response or "url" not in response["data"]:
-            logger.error(f"Invalid response format or missing URL for user {user_id}")
             raise ValueError(f"Invalid response format or missing URL for user {user_id}")
         
         # Return just the URL
         return response["data"]
         
     except Exception as e:
-        logger.error(f"Error fetching resume URL for user {user_id}: {str(e)}")
         raise Exception(f"Failed to fetch resume URL: {str(e)}")
 

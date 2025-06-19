@@ -1,10 +1,5 @@
 import asyncio
-import logging
 from app.services.broker.rpc import RPCService, RPCPayloadType
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Mock resume data for testing
 MOCK_RESUME_DATA = {
@@ -52,8 +47,6 @@ class ResumeServiceResponder:
     @staticmethod
     async def respond_rpc(request_payload: RPCPayloadType) -> dict:
         """Handle resume service requests"""
-        logger.info(f"Received request: {request_payload}")
-        
         request_type = request_payload["type"]
         request_data = request_payload["data"]
         
@@ -86,7 +79,6 @@ async def test_resume_service():
         await asyncio.sleep(2)
         
         # Test 1: Get Resume Data
-        logger.info("Testing: Get Resume Data")
         get_data_payload = RPCService.build_request_payload(
             type="get_resume_data",
             data={"user_id": "test_user_123"}
@@ -97,10 +89,8 @@ async def test_resume_service():
             request_payload=get_data_payload,
             timeout=5
         )
-        logger.info(f"Get Resume Data Response: {data_response}")
         
         # Test 2: Generate Resume
-        logger.info("Testing: Generate Resume")
         generate_payload = RPCService.build_request_payload(
             type="generate_resume",
             data=MOCK_RESUME_DATA
@@ -111,17 +101,14 @@ async def test_resume_service():
             request_payload=generate_payload,
             timeout=5
         )
-        logger.info(f"Generate Resume Response: {generate_response}")
         
         # Verify responses
         assert data_response["status"] == "success"
         assert generate_response["status"] == "success"
         assert "resume_url" in generate_response
         
-        logger.info("All tests completed successfully!")
-        
     except Exception as e:
-        logger.error(f"Test failed: {str(e)}")
+        pass
     finally:
         # Clean up
         responder_task.cancel()
